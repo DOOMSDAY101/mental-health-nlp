@@ -1,0 +1,41 @@
+Sentiment Analysis – Determine the emotional tone of text (positive, negative, neutral)
+
+DATA SET
+Sourced from subreddits concerned with mental health based conversations
+Targets given have the following mappings:
+0 = Stress
+1 = Depression
+2 = Bipolar disorder
+3 = Personality disorder
+4 = Anxiety
+
+Columns:
+
+text → The full Reddit post content.
+
+Very detailed, often multiple paragraphs, includes personal feelings, experiences, and sometimes rules or guidance (like the check-in post).
+
+This will be the main input for NLP tasks.
+
+title → The post’s title.
+
+Usually a short summary of the post or a key emotional statement.
+
+Could be used for additional features in your models or just for context.
+
+target → Label column.
+
+1 indicates the post is related to mental health / depression (at least in this sample).
+
+Could be used for supervised classification (predict if a post indicates mental health concerns).
+
+
+
+project:
+Project 3: Mental Health Text Analysis using NLP
+• Focus: Natural Language Processing (Sentiment Analysis, Topic Modelling) 
+• Task: Analyze social media/text data to detect signs of mental health issues. 
+• Framework: TensorFlow (for deep learning), NLTK or HuggingFace Transformers 
+• Dataset: Reddit Mental Health Dataset or acquire text from online forums. 
+• SDG Link: SDG 3 – Good Health and Well-being 
+• Add-on Task: Reflect on privacy and ethical handling of sensitive data.
