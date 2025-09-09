@@ -1,12 +1,12 @@
-from transformers import DistilBertTokenizerFast, TFDistilBertForSequenceClassification
+from transformers import BertTokenizerFast, TFBertForSequenceClassificationimport
 import tensorflow as tf
 from utils import clean_text
 
 
 # Load model & tokenizer
 model_path = "./models/distilbert-mental-health"
-model = TFDistilBertForSequenceClassification.from_pretrained(model_path)
-tokenizer = DistilBertTokenizerFast.from_pretrained(model_path)
+model = TFBertForSequenceClassificationimport.from_pretrained(model_path)
+tokenizer = BertTokenizerFast.from_pretrained(model_path)
 
 LABEL_MAP = {0: "Stress", 1: "Depression", 2: "Bipolar disorder", 3: "Personality disorder", 4: "Anxiety"}  
 
@@ -25,7 +25,7 @@ def predict_text(text: str):
     )
 
     # Step 3: run model
-    outputs = model(encodings)
+    outputs = model(**encodings)
     logits = outputs.logits
     probs = tf.nn.softmax(logits, axis=-1)
     predicted_class = int(tf.argmax(probs, axis=-1).numpy()[0])
