@@ -85,24 +85,35 @@ model = TFBertForSequenceClassification.from_pretrained(
     num_labels=df["target"].nunique()
 )
 
+early_stopping = keras.callbacks.EarlyStopping(
+    monitor="val_loss",
+    patience=2,
+    restore_best_weights=True
+)
 # -------------------------
 # Phase 1: Train classifier head (freeze base model)
 # -------------------------
 # for layer in model.bert.layers:
+#     layer.trainable = False
+
+# EXPERIMENT
+# for layer in model.bert.layers[:8]:
 #     layer.trainable = False
 model.bert.trainable = False
 
 model.compile(
     optimizer=keras.optimizers.Adam(learning_rate=5e-5),
     loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-    metrics=["accuracy"]
+    metrics=[keras.metrics.SparseCategoricalAccuracy(name="accuracy")]
+    # metrics=["accuracy"]
 )
 
 print("\nPhase 1: Training classifier head only...\n")
 history_phase1 = model.fit(
     train_dataset,
     validation_data=val_dataset,
-    epochs=2
+    epochs=5,
+    callbacks=[early_stopping]
 )
 
 # -------------------------
@@ -110,19 +121,25 @@ history_phase1 = model.fit(
 # -------------------------
 # for layer in model.bert.layers:
 #     layer.trainable = True
+
+# EXPERIMENT
+# for layer in model.bert.layers[8:]:
+#     layer.trainable = True
 model.bert.trainable = True
 
 model.compile(
     optimizer=keras.optimizers.Adam(learning_rate=2e-5),
     loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-    metrics=["accuracy"]
+    metrics=[keras.metrics.SparseCategoricalAccuracy(name="accuracy")]
+    # metrics=["accuracy"]
 )
 
 print("\nPhase 2: Fine-tuning full model...\n")
 history_phase2 = model.fit(
     train_dataset,
     validation_data=val_dataset,
-    epochs=3
+    epochs=10,
+    callbacks=[early_stopping]
 )
 
 print("\nModel Summary:")
