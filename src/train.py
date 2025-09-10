@@ -4,6 +4,8 @@ import tf_keras as keras
 # from transformers import DistilBertTokenizerFast, TFDistilBertForSequenceClassification
 from transformers import BertTokenizerFast, TFBertForSequenceClassification
 from sklearn.model_selection import train_test_split
+from sklearn.utils.class_weight import compute_class_weight
+import numpy as np
 
 
 DATASET_FILE_PATH = "./data/processed/reddit_mental_health_clean.csv"
@@ -126,9 +128,6 @@ history_phase1 = model.fit(
 #     layer.trainable = True
 model.bert.trainable = True
 
-print("\nModel Summary:")
-model.summary()
-
 
 model.compile(
     optimizer=keras.optimizers.Adam(learning_rate=2e-5),
@@ -137,11 +136,25 @@ model.compile(
     # metrics=["accuracy"]
 )
 
+
+print("\nModel Summary:")
+model.summary()
+
+
+
+class_weights = compute_class_weight(
+    class_weight="balanced",
+    classes=np.unique(labels),
+    y=labels
+)
+class_weights = dict(enumerate(class_weights))
+
 print("\nPhase 2: Fine-tuning full model...\n")
 history_phase2 = model.fit(
     train_dataset,
     validation_data=val_dataset,
-    epochs=10,
+    epochs=15,
+    class_weight=class_weights
 )
 
 
