@@ -112,8 +112,7 @@ print("\nPhase 1: Training classifier head only...\n")
 history_phase1 = model.fit(
     train_dataset,
     validation_data=val_dataset,
-    epochs=5,
-    callbacks=[early_stopping]
+    epochs=10,
 )
 
 # -------------------------
@@ -127,6 +126,10 @@ history_phase1 = model.fit(
 #     layer.trainable = True
 model.bert.trainable = True
 
+print("\nModel Summary:")
+model.summary()
+
+
 model.compile(
     optimizer=keras.optimizers.Adam(learning_rate=2e-5),
     loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
@@ -139,11 +142,7 @@ history_phase2 = model.fit(
     train_dataset,
     validation_data=val_dataset,
     epochs=10,
-    callbacks=[early_stopping]
 )
-
-print("\nModel Summary:")
-model.summary()
 
 
 # optimizer = tf.keras.optimizers.Adam(learning_rate=5e-5)
