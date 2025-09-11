@@ -5,7 +5,7 @@ from utils import clean_text
 
 
 # Load model & tokenizer
-model_path = "./models/distilbert-mental-health"
+model_path = "./models/bert-mental-health"
 model = TFDistilBertForSequenceClassification.from_pretrained(model_path)
 tokenizer = DistilBertTokenizerFast.from_pretrained(model_path)
 
