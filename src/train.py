@@ -2,7 +2,7 @@ import pandas as pd
 import tensorflow as tf
 import tf_keras as keras
 from tf_keras import Dense, Dropout
-from transformers import DistilBertTokenizerFast, TFDistilBertForSequenceClassification
+from transformers import DistilBertTokenizerFast, TFDistilBertForSequenceClassification, BertConfig
 # from transformers import BertTokenizerFast, TFBertForSequenceClassification
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
@@ -10,10 +10,6 @@ import numpy as np
 
 
 # from transformers import BertConfig
-
-# config = BertConfig.from_pretrained("bert-base-uncased",
-#                                     num_labels=df["target"].nunique(),
-#                                     hidden_dropout_prob=0.3)  # increase dropout
 # model = TFBertForSequenceClassification.from_pretrained(
 #     "bert-base-uncased",
 #     config=config
@@ -29,7 +25,7 @@ df = df.dropna(subset=["clean_text"])
 print("Dataset shape:", df.shape)
 print(df['target'].value_counts())
 
-tokenizer = DistilBertTokenizerFast.from_pretrained("bert-base-uncased")
+tokenizer = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
 
 # Convert text to input IDs + attention masks
 encodings = tokenizer(
@@ -66,10 +62,17 @@ val_dataset = tf.data.Dataset.from_tensor_slices((
     y_val
 )).batch(16)
 
+
+config = BertConfig.from_pretrained("distilbert-base-uncased",
+                                    num_labels=df["target"].nunique(),
+                                    hidden_dropout_prob=0.4,
+                                    attention_probs_dropout_prob=0.4) 
+
 model = TFDistilBertForSequenceClassification.from_pretrained(
-    "bert-base-uncased",
-    from_pt=True,
-    num_labels=df["target"].nunique()
+    "distilbert-base-uncased",
+    # from_pt=True,
+    # num_labels=df["target"].nunique()
+    config=config
 )
 
 early_stopping = keras.callbacks.EarlyStopping(
@@ -91,11 +94,12 @@ checkpoint = keras.callbacks.ModelCheckpoint(
 #     layer.trainable = False
 
 # EXPERIMENT
-# for layer in model.bert.layers:
+
+# for layer in model.bert.encoder.layer[:-4]:  # freeze all except last 4 layers
 #     layer.trainable = False
-for layer in model.bert.encoder.layer[:-4]:  # freeze all except last 4 layers
+for layer in model.distilbert.transformer.layer[:-2]:
     layer.trainable = False
-# model.bert.trainable = False
+
 
 model.compile(
     optimizer=keras.optimizers.Adam(learning_rate=5e-5),
@@ -117,8 +121,8 @@ history_phase1 = model.fit(
 #     layer.trainable = True
 
 # EXPERIMENT
-model.bert.trainable = True
-    # Unfreeze last 4 layers
+model.distilbert.trainable = True
+# Unfreeze last 4 layers
 # for layer in model.bert.encoder.layer[-4:]:
 #     layer.trainable = True
 # model.bert.trainable = True
