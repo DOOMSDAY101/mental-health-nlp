@@ -1,7 +1,6 @@
 import pandas as pd
 import tensorflow as tf
 import tf_keras as keras
-from tf_keras import Dense, Dropout
 from transformers import DistilBertTokenizerFast, TFDistilBertForSequenceClassification, BertConfig
 # from transformers import BertTokenizerFast, TFBertForSequenceClassification
 from sklearn.model_selection import train_test_split
