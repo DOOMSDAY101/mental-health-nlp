@@ -4,6 +4,7 @@ import os
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import nltk
+from transformers import pipeline
 
 # -------------------------
 # Download NLTK resources
@@ -14,6 +15,16 @@ nltk.download('wordnet')
 # Initialize stopwords and lemmatizer
 STOPWORDS = set(stopwords.words('english'))
 LEMMATIZER = WordNetLemmatizer()
+
+# -------------------------
+# Load Paraphrasing Model (once, for augmentation)
+# -------------------------
+paraphrase_pipe = pipeline(
+    "text2text-generation",
+    model="Vamsi/T5_Paraphrase_Paws",
+    tokenizer="Vamsi/T5_Paraphrase_Paws"
+)
+
 
 # -------------------------
 # Functions
@@ -53,22 +64,88 @@ def inspect_dataset(df, num_rows=5, show_full_text=False):
     print(df.head(num_rows))
 
 def clean_text(text):
-    """Basic text cleaning."""
+    """
+    Minimal cleaning for BERT/DistilBERT.
+    - Lowercase
+    - Replace URLs and usernames with placeholders
+    - Keep stopwords and emotional words (important for mental health context)
+    """
     if not isinstance(text, str):
         return ""
     text = text.lower()  # lowercase
-    # Replace URLs with a placeholder instead of removing
-    text = re.sub(r"http\S+|www\S+|https\S+", "<URL>", text)
-    # Remove markdown links but keep the URL placeholder
-    text = re.sub(r"\[.*?\]\(.*?\)", "<URL>", text)
+    
+    text = re.sub(r"http\S+|www\S+|https\S+", "<URL>", text) # Replace URLs with a placeholder instead of removing
+    text = re.sub(r"@\w+", "<USER>", text)          # replace mentions
+    text = re.sub(r"\[.*?\]\(.*?\)", "<URL>", text) # Remove markdown links but keep the URL placeholder
     text = re.sub(r"[^a-z\s]", "", text)  # remove punctuation and numbers
-    tokens = text.split()
-    tokens = [LEMMATIZER.lemmatize(word) for word in tokens if word not in STOPWORDS]
-    return " ".join(tokens)
+    # tokens = text.split()
+    # tokens = [LEMMATIZER.lemmatize(word) for word in tokens if word not in STOPWORDS]
+    # return " ".join(tokens)
+    return text
 
-def preprocess_dataframe(df, text_column="text"):
-    """Apply cleaning to the whole dataframe and create 'clean_text' column."""
+
+# def generate_paraphrases(text, num_return_sequences=2):
+#     """Generate paraphrased versions of text."""
+#     if not isinstance(text, str) or not text.strip():
+#         return []
+#     prompt = f"paraphrase: {text} </s>"
+#     outputs = paraphrase_pipe(
+#         prompt,
+#         max_length=256,
+#         num_return_sequences=num_return_sequences,
+#         num_beams=5,
+#         temperature=1.5
+#     )
+#     return list({o["generated_text"].strip() for o in outputs})
+
+def generate_paraphrases(text, num_return_sequences=2, max_retries=3):
+    """Generate at least `num_return_sequences` unique paraphrases with retries."""
+    if not isinstance(text, str) or not text.strip():
+        return []
+
+    prompt = f"paraphrase: {text} </s>"
+    unique_outputs = set()
+    retries = 0
+
+    while len(unique_outputs) < num_return_sequences and retries < max_retries:
+        outputs = paraphrase_pipe(
+            prompt,
+            max_length=256,
+            num_return_sequences=num_return_sequences,
+            num_beams=5,
+            temperature=1.5
+        )
+        for o in outputs:
+            unique_outputs.add(o["generated_text"].strip())
+        retries += 1
+
+    # Ensure we only return exactly num_return_sequences
+    return list(unique_outputs)[:num_return_sequences]
+
+
+
+# def preprocess_dataframe(df, text_column="text"):
+#     """Apply cleaning to the whole dataframe and create 'clean_text' column."""
+#     df["clean_text"] = df[text_column].apply(clean_text)
+#     return df
+def preprocess_dataframe(df, text_column="text", augment=True):
+    """Apply cleaning and optionally augment with paraphrases."""
     df["clean_text"] = df[text_column].apply(clean_text)
+
+    if augment:
+        augmented_rows = []
+        for _, row in df.iterrows():
+            paraphrases = generate_paraphrases(row["clean_text"])
+            for p in paraphrases:
+                augmented_rows.append({
+                    "text": row["text"],
+                    "clean_text": p,
+                    "target": row.get("target", None)  # keep label if available
+                })
+        if augmented_rows:
+            aug_df = pd.DataFrame(augmented_rows)
+            df = pd.concat([df, aug_df], ignore_index=True)
+            print(f"Augmented dataset with {len(aug_df)} paraphrased rows.")
     return df
 
 

@@ -31,8 +31,8 @@ encodings = tokenizer(
     df["clean_text"].tolist(),
     truncation=True,
     padding=True,
-    max_length=128,   # limit sequence length
-    return_tensors="tf"
+    max_length=256,   # limit sequence length
+    return_tensors="np"
 )
 
 # Convert to numpy arrays before splitting
@@ -42,30 +42,37 @@ labels = df["target"].to_numpy()
 
 # Split input_ids + labels
 X_train_ids, X_val_ids, y_train, y_val = train_test_split(
-    input_ids, labels, test_size=0.2, random_state=42, stratify=labels
+    input_ids, labels, test_size=0.2, stratify=labels, random_state=42
 )
 
 # Split attention_mask with same stratification
 X_train_mask, X_val_mask, _, _ = train_test_split(
-    attention_mask, labels, test_size=0.2, random_state=42, stratify=labels
+    attention_mask, labels, test_size=0.2, stratify=labels, random_state=42
 )
 
 # Build datasets
-train_dataset = tf.data.Dataset.from_tensor_slices((
-    {"input_ids": X_train_ids, "attention_mask": X_train_mask},
-    y_train
-)).batch(16)
+# train_dataset = tf.data.Dataset.from_tensor_slices((
+#     {"input_ids": X_train_ids, "attention_mask": X_train_mask},
+#     y_train
+# )).batch(16)
 
-val_dataset = tf.data.Dataset.from_tensor_slices((
-    {"input_ids": X_val_ids, "attention_mask": X_val_mask},
-    y_val
-)).batch(16)
+# val_dataset = tf.data.Dataset.from_tensor_slices((
+#     {"input_ids": X_val_ids, "attention_mask": X_val_mask},
+#     y_val
+# )).batch(16)
+train_dataset = tf.data.Dataset.from_tensor_slices(
+    ({"input_ids": X_train_ids, "attention_mask": X_train_mask}, y_train)
+).shuffle(1000).batch(16).prefetch(tf.data.AUTOTUNE)
+
+val_dataset = tf.data.Dataset.from_tensor_slices(
+    ({"input_ids": X_val_ids, "attention_mask": X_val_mask}, y_val)
+).batch(16).prefetch(tf.data.AUTOTUNE)
 
 
 config = DistilBertConfig.from_pretrained("distilbert-base-uncased",
                                     num_labels=df["target"].nunique(),
-                                    dropout=0.4,
-                                    attention_dropout=0.4) 
+                                    dropout=0.3,
+                                    attention_dropout=0.3) 
 
 model = TFDistilBertForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
@@ -129,7 +136,7 @@ model.distilbert.trainable = True
 
 
 model.compile(
-    optimizer=keras.optimizers.Adam(learning_rate=1e-5),
+    optimizer=keras.optimizers.Adam(learning_rate=2e-5),
     loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
     metrics=[keras.metrics.SparseCategoricalAccuracy(name="accuracy")]
     # metrics=["accuracy"]
