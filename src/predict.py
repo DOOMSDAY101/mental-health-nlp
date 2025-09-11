@@ -26,7 +26,7 @@ def predict_text(text: str):
     )
 
     # Step 3: run model
-    outputs = model(**encodings)
+    outputs = model(encodings)
     logits = outputs.logits
     probs = tf.nn.softmax(logits, axis=-1)
     predicted_class = int(tf.argmax(probs, axis=-1).numpy()[0])
