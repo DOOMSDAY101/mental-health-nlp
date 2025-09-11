@@ -1,7 +1,7 @@
 import pandas as pd
 import tensorflow as tf
 import tf_keras as keras
-from transformers import DistilBertTokenizerFast, TFDistilBertForSequenceClassification, BertConfig
+from transformers import DistilBertTokenizerFast, TFDistilBertForSequenceClassification, DistilBertConfig
 # from transformers import BertTokenizerFast, TFBertForSequenceClassification
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
@@ -62,7 +62,7 @@ val_dataset = tf.data.Dataset.from_tensor_slices((
 )).batch(16)
 
 
-config = BertConfig.from_pretrained("distilbert-base-uncased",
+config = DistilBertConfig.from_pretrained("distilbert-base-uncased",
                                     num_labels=df["target"].nunique(),
                                     hidden_dropout_prob=0.4,
                                     attention_probs_dropout_prob=0.4) 
