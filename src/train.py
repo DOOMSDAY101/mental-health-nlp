@@ -64,14 +64,15 @@ val_dataset = tf.data.Dataset.from_tensor_slices((
 
 config = DistilBertConfig.from_pretrained("distilbert-base-uncased",
                                     num_labels=df["target"].nunique(),
-                                    hidden_dropout_prob=0.4,
-                                    attention_probs_dropout_prob=0.4) 
+                                    dropout=0.4,
+                                    attention_dropout=0.4) 
 
 model = TFDistilBertForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
     # from_pt=True,
     # num_labels=df["target"].nunique()
-    config=config
+    config=config,
+    from_pt=True
 )
 
 early_stopping = keras.callbacks.EarlyStopping(
