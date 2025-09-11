@@ -1,12 +1,13 @@
-from transformers import BertTokenizerFast, TFBertForSequenceClassificationimport
+# from transformers import BertTokenizerFast, TFBertForSequenceClassificationimport
+from transformers import DistilBertTokenizerFast, TFDistilBertForSequenceClassification
 import tensorflow as tf
 from utils import clean_text
 
 
 # Load model & tokenizer
 model_path = "./models/distilbert-mental-health"
-model = TFBertForSequenceClassificationimport.from_pretrained(model_path)
-tokenizer = BertTokenizerFast.from_pretrained(model_path)
+model = TFDistilBertForSequenceClassification.from_pretrained(model_path)
+tokenizer = DistilBertTokenizerFast.from_pretrained(model_path)
 
 LABEL_MAP = {0: "Stress", 1: "Depression", 2: "Bipolar disorder", 3: "Personality disorder", 4: "Anxiety"}  
 
@@ -41,5 +42,5 @@ def predict_text(text: str):
 if __name__ == "__main__":
     sample_text = "I've been feeling really down lately and can't focus."
     user_text = input("Enter a text to classify: ")
-    result = predict_text(sample_text)
+    result = predict_text(user_text)
     print(result)
