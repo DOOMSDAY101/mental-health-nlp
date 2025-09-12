@@ -4,7 +4,7 @@ import os
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import nltk
-from transformers import pipeline
+from transformers import pipeline,  AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
 # -------------------------
 # Download NLTK resources
@@ -19,10 +19,21 @@ LEMMATIZER = WordNetLemmatizer()
 # -------------------------
 # Load Paraphrasing Model (once, for augmentation)
 # -------------------------
+# paraphrase_pipe = pipeline(
+#     "text2text-generation",
+#     model="Vamsi/T5_Paraphrase_Paws",
+#     tokenizer="Vamsi/T5_Paraphrase_Paws",
+#     use_fast=False
+# )
+model_name = "Vamsi/T5_Paraphrase_Paws"
+
+tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+
 paraphrase_pipe = pipeline(
     "text2text-generation",
-    model="Vamsi/T5_Paraphrase_Paws",
-    tokenizer="Vamsi/T5_Paraphrase_Paws"
+    model=model,
+    tokenizer=tokenizer
 )
 
 
@@ -74,10 +85,11 @@ def clean_text(text):
         return ""
     text = text.lower()  # lowercase
     
-    text = re.sub(r"http\S+|www\S+|https\S+", "<URL>", text) # Replace URLs with a placeholder instead of removing
-    text = re.sub(r"@\w+", "<USER>", text)          # replace mentions
-    text = re.sub(r"\[.*?\]\(.*?\)", "<URL>", text) # Remove markdown links but keep the URL placeholder
+    text = re.sub(r"http\S+|www\S+|https\S+", "", text) # Replace URLs with a placeholder instead of removing
+    text = re.sub(r"@\w+", "", text)          # replace mentions
+    text = re.sub(r"\[.*?\]\(.*?\)", "", text) # Remove markdown links but keep the URL placeholder
     text = re.sub(r"[^a-z\s]", "", text)  # remove punctuation and numbers
+    text = re.sub(r"\s+", " ", text).strip()  # Collapse multiple spaces into one
     # tokens = text.split()
     # tokens = [LEMMATIZER.lemmatize(word) for word in tokens if word not in STOPWORDS]
     # return " ".join(tokens)
@@ -103,20 +115,29 @@ def generate_paraphrases(text, num_return_sequences=2, max_retries=3):
     if not isinstance(text, str) or not text.strip():
         return []
 
-    prompt = f"paraphrase: {text} </s>"
+    prompt = f"paraphrase: {text}"
     unique_outputs = set()
     retries = 0
 
     while len(unique_outputs) < num_return_sequences and retries < max_retries:
-        outputs = paraphrase_pipe(
-            prompt,
-            max_length=256,
-            num_return_sequences=num_return_sequences,
+        inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
+        # outputs = paraphrase_pipe(
+        #     prompt,
+        #     max_new_tokens=256,
+        #     num_return_sequences=num_return_sequences,
+        #     num_beams=5,
+        # )
+        outputs = model.generate(
+            **inputs,
+            max_new_tokens=256,
             num_beams=5,
-            temperature=1.5
+            num_return_sequences=num_return_sequences,
+            do_sample=False  # deterministic beam search
         )
         for o in outputs:
-            unique_outputs.add(o["generated_text"].strip())
+            paraphrase = tokenizer.decode(o, skip_special_tokens=True).strip()
+            # unique_outputs.add(o["generated_text"].strip())
+            unique_outputs.add(paraphrase)
         retries += 1
 
     # Ensure we only return exactly num_return_sequences
@@ -174,6 +195,11 @@ if __name__ == "__main__":
     df = load_dataset(raw_file)
     df = clean_dataset(df)
     inspect_dataset(df, num_rows=5, show_full_text=True)
+
+    sample_text = df["text"].iloc[0]
+    print("RAW:", sample_text)
+    print("CLEANED:", clean_text(sample_text))
+    print("PARAPHRASES:", generate_paraphrases(clean_text(sample_text), debug=True))
 
     # Preprocess text and save
     df = preprocess_dataframe(df)
