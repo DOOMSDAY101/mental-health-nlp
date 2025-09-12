@@ -5,6 +5,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import nltk
 from transformers import pipeline,  AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
+import torch
 
 # -------------------------
 # Download NLTK resources
@@ -121,6 +122,11 @@ def generate_paraphrases(text, num_return_sequences=2, max_retries=3):
 
     while len(unique_outputs) < num_return_sequences and retries < max_retries:
         inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model.to(device)
+
+        inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
+        inputs = {k: v.to(device) for k, v in inputs.items()}
         # outputs = paraphrase_pipe(
         #     prompt,
         #     max_new_tokens=256,
