@@ -199,7 +199,7 @@ if __name__ == "__main__":
     sample_text = df["text"].iloc[0]
     print("RAW:", sample_text)
     print("CLEANED:", clean_text(sample_text))
-    print("PARAPHRASES:", generate_paraphrases(clean_text(sample_text), debug=True))
+    print("PARAPHRASES:", generate_paraphrases(clean_text(sample_text)))
 
     # Preprocess text and save
     df = preprocess_dataframe(df)
