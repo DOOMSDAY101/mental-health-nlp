@@ -6,6 +6,7 @@ from nltk.stem import WordNetLemmatizer
 import nltk
 from transformers import pipeline,  AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 import torch
+from tqdm import tqdm
 
 # -------------------------
 # Download NLTK resources
@@ -161,7 +162,7 @@ def preprocess_dataframe(df, text_column="text", augment=True):
 
     if augment:
         augmented_rows = []
-        for _, row in df.iterrows():
+        for _, row in tqdm(df.iterrows(), total=df.shape[0], desc="Generating paraphrases"):
             paraphrases = generate_paraphrases(row["clean_text"])
             for p in paraphrases:
                 augmented_rows.append({
