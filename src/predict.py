@@ -1,11 +1,14 @@
 # from transformers import BertTokenizerFast, TFBertForSequenceClassificationimport
 from transformers import DistilBertTokenizerFast, TFDistilBertForSequenceClassification
 import tensorflow as tf
-from utils import clean_text
+from preprocessing import clean_text
 
 
 # Load model & tokenizer
-model_path = "./models/bert-mental-health"
+# model_path = "./models/bert-mental-health"
+BASE_PATH = "/kaggle/working/mental-health-nlp"
+MODEL_PATH = f"{BASE_PATH}/models/bert-mental-health"
+
 model = TFDistilBertForSequenceClassification.from_pretrained(model_path)
 tokenizer = DistilBertTokenizerFast.from_pretrained(model_path)
 
