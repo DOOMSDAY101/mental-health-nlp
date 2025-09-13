@@ -9,8 +9,10 @@ from preprocessing import clean_text
 BASE_PATH = "/kaggle/working/mental-health-nlp"
 MODEL_PATH = f"{BASE_PATH}/models/bert-mental-health"
 
-model = TFDistilBertForSequenceClassification.from_pretrained(model_path)
-tokenizer = DistilBertTokenizerFast.from_pretrained(model_path)
+# model = TFDistilBertForSequenceClassification.from_pretrained(model_path)
+# tokenizer = DistilBertTokenizerFast.from_pretrained(model_path)
+model = TFDistilBertForSequenceClassification.from_pretrained(MODEL_PATH)
+tokenizer = DistilBertTokenizerFast.from_pretrained(MODEL_PATH)
 
 LABEL_MAP = {0: "Stress", 1: "Depression", 2: "Bipolar disorder", 3: "Personality disorder", 4: "Anxiety"}  
 
