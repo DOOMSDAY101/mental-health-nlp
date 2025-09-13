@@ -117,6 +117,8 @@ history_phase1 = model.fit(
     train_dataset,
     validation_data=val_dataset,
     epochs=10,
+    callbacks=[early_stopping]
+
 )
 
 # -------------------------
