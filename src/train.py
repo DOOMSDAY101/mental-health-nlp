@@ -6,7 +6,7 @@ from transformers import DistilBertTokenizerFast, TFDistilBertForSequenceClassif
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
-
+from preprocessing import clean_text  
 
 BASE_PATH = "/kaggle/working/mental-health-nlp"
 DATASET_FILE_PATH = f"{BASE_PATH}/data/processed/reddit_mental_health_clean.csv"
@@ -17,6 +17,7 @@ MODEL_DIR = f"{BASE_PATH}/models"
 df = pd.read_csv(DATASET_FILE_PATH, index_col=0)
 df = df.dropna(subset=["clean_text"])
 
+df["clean_text"] = df["clean_text"].apply(clean_text)
 print("Dataset shape:", df.shape)
 print(df['target'].value_counts())
 
