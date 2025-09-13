@@ -202,10 +202,10 @@ if __name__ == "__main__":
     if os.path.exists("/kaggle/input/mental-health-dataset/reddit_mental_health_nlp.csv"):
         raw_file = "/kaggle/input/mental-health-dataset/reddit_mental_health_nlp.csv"
     else:
-        raw_file = "/kaggle/working/data/raw/reddit_mental_health_nlp.csv"
+        raw_file = "/kaggle/working/mental-health-nlp/data/raw/reddit_mental_health_nlp.csv"
 
     # Always save processed output under /kaggle/working
-    processed_file = "/kaggle/working/data/processed/reddit_mental_health_clean.csv"
+    processed_file = "/kaggle/working/mental-health-nlp/data/processed/reddit_mental_health_clean.csv"
     os.makedirs(os.path.dirname(processed_file), exist_ok=True)
 
 
