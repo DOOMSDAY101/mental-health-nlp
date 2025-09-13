@@ -28,7 +28,7 @@ encodings = tokenizer(
     truncation=True,
     padding=True,
     max_length=256,   # limit sequence length
-    return_tensors="np"
+    return_tensors="tf"
 )
 
 # Convert to numpy arrays before splitting
