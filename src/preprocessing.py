@@ -156,25 +156,97 @@ def generate_paraphrases(text, num_return_sequences=2, max_retries=3):
 #     """Apply cleaning to the whole dataframe and create 'clean_text' column."""
 #     df["clean_text"] = df[text_column].apply(clean_text)
 #     return df
-def preprocess_dataframe(df, text_column="text", augment=True):
-    """Apply cleaning and optionally augment with paraphrases."""
+# def preprocess_dataframe(df, text_column="text", augment=True):
+#     """Apply cleaning and optionally augment with paraphrases."""
+#     df["clean_text"] = df[text_column].apply(clean_text)
+
+#     if augment:
+#         augmented_rows = []
+#         for _, row in tqdm(df.iterrows(), total=df.shape[0], desc="Generating paraphrases"):
+#             paraphrases = generate_paraphrases(row["clean_text"])
+#             for p in paraphrases:
+#                 augmented_rows.append({
+#                     "text": row["text"],
+#                     "clean_text": p,
+#                     "target": row.get("target", None)  # keep label if available
+#                 })
+#         if augmented_rows:
+#             aug_df = pd.DataFrame(augmented_rows)
+#             df = pd.concat([df, aug_df], ignore_index=True)
+#             print(f"Augmented dataset with {len(aug_df)} paraphrased rows.")
+#     return df
+def preprocess_dataframe(df, text_column="text", augment=True,
+                         checkpoint_dir="/kaggle/working/checkpoints",
+                         chunk_size=500):
+    """
+    Apply cleaning and optionally augment with paraphrases in chunks.
+    Saves progress after each chunk so it can resume if interrupted.
+
+    Args:
+        df: Input dataframe.
+        text_column: Column containing text.
+        augment: Whether to generate paraphrases.
+        checkpoint_dir: Directory to save partial results.
+        chunk_size: Number of rows per chunk.
+    """
+
+    os.makedirs(checkpoint_dir, exist_ok=True)
+
+    # Clean text column first
     df["clean_text"] = df[text_column].apply(clean_text)
 
-    if augment:
-        augmented_rows = []
-        for _, row in tqdm(df.iterrows(), total=df.shape[0], desc="Generating paraphrases"):
-            paraphrases = generate_paraphrases(row["clean_text"])
-            for p in paraphrases:
-                augmented_rows.append({
-                    "text": row["text"],
-                    "clean_text": p,
-                    "target": row.get("target", None)  # keep label if available
-                })
-        if augmented_rows:
-            aug_df = pd.DataFrame(augmented_rows)
-            df = pd.concat([df, aug_df], ignore_index=True)
-            print(f"Augmented dataset with {len(aug_df)} paraphrased rows.")
-    return df
+    # Final output file
+    final_path = os.path.join(checkpoint_dir, "processed_full.csv")
+
+    # If final already exists, skip everything
+    if os.path.exists(final_path):
+        print("Final processed dataset already exists. Loading...")
+        return pd.read_csv(final_path)
+
+    all_chunks = []
+    num_chunks = (len(df) + chunk_size - 1) // chunk_size
+
+    for chunk_idx in range(num_chunks):
+        start = chunk_idx * chunk_size
+        end = min((chunk_idx + 1) * chunk_size, len(df))
+        chunk = df.iloc[start:end].copy()
+
+        checkpoint_path = os.path.join(checkpoint_dir, f"chunk_{chunk_idx}.csv")
+
+        # If this chunk already processed, load it
+        if os.path.exists(checkpoint_path):
+            print(f"Chunk {chunk_idx+1}/{num_chunks} already processed. Loading from checkpoint...")
+            chunk_result = pd.read_csv(checkpoint_path)
+        else:
+            print(f"Processing chunk {chunk_idx+1}/{num_chunks} ({start}:{end})...")
+            if augment:
+                augmented_rows = []
+                for _, row in tqdm(chunk.iterrows(), total=chunk.shape[0], desc=f"Chunk {chunk_idx+1}"):
+                    paraphrases = generate_paraphrases(row["clean_text"])
+                    for p in paraphrases:
+                        augmented_rows.append({
+                            "text": row["text"],
+                            "clean_text": p,
+                            "target": row.get("target", None)
+                        })
+                if augmented_rows:
+                    aug_df = pd.DataFrame(augmented_rows)
+                    chunk = pd.concat([chunk, aug_df], ignore_index=True)
+
+            # Save this chunk
+            chunk.to_csv(checkpoint_path, index=False)
+            print(f"Checkpoint saved -> {checkpoint_path}")
+            chunk_result = chunk
+
+        all_chunks.append(chunk_result)
+
+    # Combine everything
+    full_df = pd.concat(all_chunks, ignore_index=True)
+    full_df.to_csv(final_path, index=False)
+    print(f"✅ Full processed dataset saved -> {final_path}")
+
+    return full_df
+
 
 
 def save_processed_data(df, save_path):
@@ -221,5 +293,6 @@ if __name__ == "__main__":
     print("PARAPHRASES:", generate_paraphrases(clean_text(sample_text)))
 
     # Preprocess text and save
-    df = preprocess_dataframe(df)
+    # df = preprocess_dataframe(df)
+    df = preprocess_dataframe(df, checkpoint_dir="/kaggle/working/checkpoints", chunk_size=500)
     save_processed_data(df, processed_file)
