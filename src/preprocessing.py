@@ -4,7 +4,7 @@ import os
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import nltk
-from transformers import pipeline,  AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
+from transformers import pipeline,  AutoTokenizer, AutoModelForSeq2SeqLM
 import torch
 from tqdm import tqdm
 
