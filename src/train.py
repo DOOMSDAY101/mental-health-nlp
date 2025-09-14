@@ -8,10 +8,10 @@ from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
 from preprocessing import clean_text  
 
-BASE_PATH = "/kaggle/working/mental-health-nlp"
-DATASET_FILE_PATH = f"{BASE_PATH}/data/processed/reddit_mental_health_clean.csv"
-MODEL_DIR = f"{BASE_PATH}/models"
-# DATASET_FILE_PATH = "./data/processed/reddit_mental_health_clean.csv"
+# BASE_PATH = "/kaggle/working/mental-health-nlp"
+# DATASET_FILE_PATH = f"{BASE_PATH}/data/processed/reddit_mental_health_clean.csv"
+# MODEL_DIR = f"{BASE_PATH}/models"
+DATASET_FILE_PATH = "./data/processed/reddit_mental_health_clean.csv"
 
 
 df = pd.read_csv(DATASET_FILE_PATH, index_col=0)
@@ -85,8 +85,8 @@ early_stopping = keras.callbacks.EarlyStopping(
     restore_best_weights=True
 )
 checkpoint = keras.callbacks.ModelCheckpoint(
-    # "./models/best_bert",
-    f"{MODEL_DIR}/best_bert",
+    "./models/best_bert",
+    # f"{MODEL_DIR}/best_bert",
     monitor="val_loss",
     save_best_only=True,
     save_weights_only=False
@@ -168,10 +168,10 @@ history_phase2 = model.fit(
 # -------------------------
 # Save model & tokenizer
 # -------------------------
-# model.save_pretrained("./models/bert-mental-health")
-# tokenizer.save_pretrained("./models/bert-mental-health")
-model.save_pretrained(f"{MODEL_DIR}/bert-mental-health")
-tokenizer.save_pretrained(f"{MODEL_DIR}/bert-mental-health")
+model.save_pretrained("./models/bert-mental-health")
+tokenizer.save_pretrained("./models/bert-mental-health")
+# model.save_pretrained(f"{MODEL_DIR}/bert-mental-health")
+# tokenizer.save_pretrained(f"{MODEL_DIR}/bert-mental-health")
 
 # -------------------------
 # Evaluation

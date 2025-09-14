@@ -39,3 +39,8 @@ Project 3: Mental Health Text Analysis using NLP
 • Dataset: Reddit Mental Health Dataset or acquire text from online forums. 
 • SDG Link: SDG 3 – Good Health and Well-being 
 • Add-on Task: Reflect on privacy and ethical handling of sensitive data.
+
+
+MODEL EVALUATION
+Final Evaluation on Validation Set:
+{'loss': 0.07479463517665863, 'accuracy': 0.9810981154441833}
