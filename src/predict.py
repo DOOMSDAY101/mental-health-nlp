@@ -44,8 +44,21 @@ def predict_text(text: str):
     }
 
 
+# if __name__ == "__main__":
+#     sample_text = "I've been feeling really down lately and can't focus."
+#     user_text = input("Enter a text to classify: ")
+#     result = predict_text(user_text)
+#     print(result)
+
 if __name__ == "__main__":
-    sample_text = "I've been feeling really down lately and can't focus."
-    user_text = input("Enter a text to classify: ")
-    result = predict_text(user_text)
-    print(result)
+    print("Mental Health Text Classifier (type 'x' to exit)\n")
+
+    while True:
+        user_text = input("Enter a text to classify: ")
+        if user_text.lower().strip() == "x":
+            print("Exiting... Goodbye!")
+            break
+
+        result = predict_text(user_text)
+        print(result)
+        print("-" * 50)
