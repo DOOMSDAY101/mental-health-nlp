@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mental Health Classifier</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+        color: #e2e8f0;
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+
+      .header {
+        background: rgba(30, 41, 59, 0.5);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+        padding: 1.5rem 0;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .icon-wrapper {
+        width: 2.5rem;
+        height: 2.5rem;
+        background: rgba(59, 130, 246, 0.1);
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .brain-icon {
+        width: 1.5rem;
+        height: 1.5rem;
+        color: #3b82f6;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #f1f5f9;
+        margin-bottom: 0.25rem;
+      }
+
+      .header p {
+        font-size: 0.875rem;
+        color: #94a3b8;
+      }
+
+      .main-content {
+        padding: 2rem 0;
+      }
+
+      .content-wrapper {
+        max-width: 42rem;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .card {
+        background: rgba(30, 41, 59, 0.5);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(51, 65, 85, 0.3);
+        border-radius: 0.75rem;
+        overflow: hidden;
+      }
+
+      .card-header {
+        padding: 1.5rem 1.5rem 0;
+      }
+
+      .card-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #f1f5f9;
+        margin-bottom: 0.5rem;
+      }
+
+      .card-description {
+        color: #94a3b8;
+        font-size: 0.875rem;
+      }
+
+      .card-content {
+        padding: 1.5rem;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 0.75rem;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid rgba(51, 65, 85, 0.5);
+        border-radius: 0.5rem;
+        color: #f1f5f9;
+        font-family: inherit;
+        font-size: 0.875rem;
+        resize: vertical;
+        transition: all 0.2s ease;
+      }
+
+      .textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .textarea::placeholder {
+        color: #64748b;
+      }
+
+      .btn {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+      }
+
+      .btn:hover:not(:disabled) {
+        background: #2563eb;
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .spinner {
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .results-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .result-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .result-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #94a3b8;
+      }
+
+      .prediction-value {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #f1f5f9;
+      }
+
+      .confidence-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .confidence-bar {
+        flex: 1;
+        height: 0.5rem;
+        background: rgba(51, 65, 85, 0.5);
+        border-radius: 9999px;
+        overflow: hidden;
+      }
+
+      .confidence-fill {
+        height: 100%;
+        background: #3b82f6;
+        border-radius: 9999px;
+        transition: width 0.5s ease;
+      }
+
+      .confidence-badge {
+        padding: 0.25rem 0.5rem;
+        background: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+
+      .processed-text {
+        background: rgba(51, 65, 85, 0.3);
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        color: #94a3b8;
+      }
+
+      .error-message {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(239, 68, 68, 0.1);
+        color: #fca5a5;
+        padding: 1rem;
+        border-radius: 0.5rem;
+      }
+
+      .info-card {
+        background: rgba(30, 41, 59, 0.3);
+      }
+
+      .info-content {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1.5rem;
+      }
+
+      .info-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .info-title {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #f1f5f9;
+      }
+
+      .info-description {
+        font-size: 0.75rem;
+        color: #94a3b8;
+      }
+
+      .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+
+      .icon-primary {
+        color: #3b82f6;
+      }
+      .icon-success {
+        color: #10b981;
+      }
+      .icon-warning {
+        color: #f59e0b;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @media (max-width: 640px) {
+        .container {
+          padding: 0 0.75rem;
+        }
+        .card-content {
+          padding: 1rem;
+        }
+        .header h1 {
+          font-size: 1.25rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <div class="container">
+        <div class="header-content">
+          <div class="icon-wrapper">
+            <svg
+              class="brain-icon"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h1>Mental Health Classifier</h1>
+            <p>AI-powered text analysis for mental health insights</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="container">
+        <div class="content-wrapper">
+          <!-- Input Card -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg
+                  class="icon icon-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                  />
+                </svg>
+                Text Analysis
+              </div>
+              <div class="card-description">
+                Enter text below for mental health classification analysis
+              </div>
+            </div>
+            <div class="card-content">
+              <div class="form-group">
+                <textarea
+                  id="inputText"
+                  class="textarea"
+                  placeholder="Enter your text here for analysis..."
+                ></textarea>
+                <button id="analyzeBtn" class="btn">
+                  <svg
+                    class="icon"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                    />
+                  </svg>
+                  Analyze Text
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Results Card -->
+          <div id="resultsCard" class="card hidden">
+            <div class="card-header">
+              <div class="card-title">
+                <svg
+                  id="resultIcon"
+                  class="icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Analysis Results
+              </div>
+            </div>
+            <div class="card-content">
+              <div id="errorMessage" class="error-message hidden">
+                <svg
+                  class="icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+                <span id="errorText"></span>
+              </div>
+
+              <div id="resultsSection" class="results-section hidden">
+                <!-- Prediction -->
+                <div class="result-item">
+                  <div class="result-label">Prediction</div>
+                  <div id="predictionValue" class="prediction-value"></div>
+                </div>
+
+                <!-- Confidence -->
+                <div class="result-item">
+                  <div class="result-label">Confidence Level</div>
+                  <div class="confidence-bar-container">
+                    <div class="confidence-bar">
+                      <div id="confidenceFill" class="confidence-fill"></div>
+                    </div>
+                    <div id="confidenceBadge" class="confidence-badge"></div>
+                  </div>
+                </div>
+
+                <!-- Processed Text -->
+                <div class="result-item">
+                  <div class="result-label">Processed Text</div>
+                  <div id="processedText" class="processed-text"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Project Info Card -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg
+                  class="icon icon-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                About This Project
+              </div>
+              <div class="card-description">
+                Mental Health Text Analysis using Natural Language Processing
+              </div>
+            </div>
+            <div class="card-content">
+              <div style="display: flex; flex-direction: column; gap: 1rem">
+                <div>
+                  <div
+                    style="
+                      font-weight: 500;
+                      color: #f1f5f9;
+                      margin-bottom: 0.5rem;
+                    "
+                  >
+                    Project Overview
+                  </div>
+                  <div
+                    style="
+                      color: #94a3b8;
+                      font-size: 0.875rem;
+                      line-height: 1.5;
+                    "
+                  >
+                    This project uses deep learning with DistilBERT transformers
+                    to analyze social media text and detect signs of mental
+                    health concerns. The model was trained on Reddit posts from
+                    mental health-related subreddits and achieves
+                    <strong style="color: #10b981">98.1% accuracy</strong> on
+                    validation data.
+                  </div>
+                </div>
+
+                <div>
+                  <div
+                    style="
+                      font-weight: 500;
+                      color: #f1f5f9;
+                      margin-bottom: 0.5rem;
+                    "
+                  >
+                    Classification Categories
+                  </div>
+                  <div
+                    style="
+                      display: grid;
+                      grid-template-columns: repeat(
+                        auto-fit,
+                        minmax(200px, 1fr)
+                      );
+                      gap: 0.75rem;
+                    "
+                  >
+                    <div
+                      style="
+                        background: rgba(51, 65, 85, 0.3);
+                        padding: 0.75rem;
+                        border-radius: 0.5rem;
+                        border-left: 3px solid #ef4444;
+                      "
+                    >
+                      <div
+                        style="
+                          font-weight: 500;
+                          color: #f1f5f9;
+                          font-size: 0.875rem;
+                        "
+                      >
+                        Stress
+                      </div>
+                      <div style="color: #94a3b8; font-size: 0.75rem">
+                        Work, life pressures
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        background: rgba(51, 65, 85, 0.3);
+                        padding: 0.75rem;
+                        border-radius: 0.5rem;
+                        border-left: 3px solid #3b82f6;
+                      "
+                    >
+                      <div
+                        style="
+                          font-weight: 500;
+                          color: #f1f5f9;
+                          font-size: 0.875rem;
+                        "
+                      >
+                        Depression
+                      </div>
+                      <div style="color: #94a3b8; font-size: 0.75rem">
+                        Persistent sadness, hopelessness
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        background: rgba(51, 65, 85, 0.3);
+                        padding: 0.75rem;
+                        border-radius: 0.5rem;
+                        border-left: 3px solid #8b5cf6;
+                      "
+                    >
+                      <div
+                        style="
+                          font-weight: 500;
+                          color: #f1f5f9;
+                          font-size: 0.875rem;
+                        "
+                      >
+                        Bipolar Disorder
+                      </div>
+                      <div style="color: #94a3b8; font-size: 0.75rem">
+                        Mood swings, manic episodes
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        background: rgba(51, 65, 85, 0.3);
+                        padding: 0.75rem;
+                        border-radius: 0.5rem;
+                        border-left: 3px solid #f59e0b;
+                      "
+                    >
+                      <div
+                        style="
+                          font-weight: 500;
+                          color: #f1f5f9;
+                          font-size: 0.875rem;
+                        "
+                      >
+                        Personality Disorder
+                      </div>
+                      <div style="color: #94a3b8; font-size: 0.75rem">
+                        Behavioral patterns, relationships
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        background: rgba(51, 65, 85, 0.3);
+                        padding: 0.75rem;
+                        border-radius: 0.5rem;
+                        border-left: 3px solid #10b981;
+                      "
+                    >
+                      <div
+                        style="
+                          font-weight: 500;
+                          color: #f1f5f9;
+                          font-size: 0.875rem;
+                        "
+                      >
+                        Anxiety
+                      </div>
+                      <div style="color: #94a3b8; font-size: 0.75rem">
+                        Worry, panic, social fears
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div
+                    style="
+                      font-weight: 500;
+                      color: #f1f5f9;
+                      margin-bottom: 0.5rem;
+                    "
+                  >
+                    Technical Details
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 0.5rem">
+                    <span
+                      style="
+                        background: rgba(59, 130, 246, 0.2);
+                        color: #93c5fd;
+                        padding: 0.25rem 0.5rem;
+                        border-radius: 0.375rem;
+                        font-size: 0.75rem;
+                      "
+                      >DistilBERT</span
+                    >
+                    <span
+                      style="
+                        background: rgba(59, 130, 246, 0.2);
+                        color: #93c5fd;
+                        padding: 0.25rem 0.5rem;
+                        border-radius: 0.375rem;
+                        font-size: 0.75rem;
+                      "
+                      >TensorFlow</span
+                    >
+                    <span
+                      style="
+                        background: rgba(59, 130, 246, 0.2);
+                        color: #93c5fd;
+                        padding: 0.25rem 0.5rem;
+                        border-radius: 0.375rem;
+                        font-size: 0.75rem;
+                      "
+                      >HuggingFace Transformers</span
+                    >
+                    <span
+                      style="
+                        background: rgba(59, 130, 246, 0.2);
+                        color: #93c5fd;
+                        padding: 0.25rem 0.5rem;
+                        border-radius: 0.375rem;
+                        font-size: 0.75rem;
+                      "
+                      >NLTK</span
+                    >
+                    <span
+                      style="
+                        background: rgba(16, 185, 129, 0.2);
+                        color: #6ee7b7;
+                        padding: 0.25rem 0.5rem;
+                        border-radius: 0.375rem;
+                        font-size: 0.75rem;
+                      "
+                      >98.1% Accuracy</span
+                    >
+                  </div>
+                </div>
+
+                <div
+                  style="
+                    background: rgba(59, 130, 246, 0.1);
+                    border: 1px solid rgba(59, 130, 246, 0.2);
+                    padding: 1rem;
+                    border-radius: 0.5rem;
+                  "
+                >
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 0.5rem;
+                      margin-bottom: 0.5rem;
+                    "
+                  >
+                    <svg
+                      style="width: 1rem; height: 1rem; color: #3b82f6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                      />
+                    </svg>
+                    <span
+                      style="
+                        font-weight: 500;
+                        color: #3b82f6;
+                        font-size: 0.875rem;
+                      "
+                      >SDG 3 - Good Health and Well-being</span
+                    >
+                  </div>
+                  <div style="color: #94a3b8; font-size: 0.75rem">
+                    This project contributes to the UN Sustainable Development
+                    Goal 3 by exploring how AI can help in early detection of
+                    mental health issues through text analysis.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info Card -->
+          <div class="card info-card">
+            <div class="info-content">
+              <svg
+                class="icon icon-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+              <div class="info-text">
+                <div class="info-title">Privacy & Security</div>
+                <div class="info-description">
+                  Your text is processed securely and not stored permanently.
+                  This tool is for informational purposes only and should not
+                  replace professional medical advice.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const inputText = document.getElementById("inputText");
+      const analyzeBtn = document.getElementById("analyzeBtn");
+      const resultsCard = document.getElementById("resultsCard");
+      const errorMessage = document.getElementById("errorMessage");
+      const errorText = document.getElementById("errorText");
+      const resultsSection = document.getElementById("resultsSection");
+      const predictionValue = document.getElementById("predictionValue");
+      const confidenceFill = document.getElementById("confidenceFill");
+      const confidenceBadge = document.getElementById("confidenceBadge");
+      const processedText = document.getElementById("processedText");
+      const resultIcon = document.getElementById("resultIcon");
+
+      let isLoading = false;
+
+      function updateButtonState() {
+        const hasText = inputText.value.trim().length > 0;
+        analyzeBtn.disabled = !hasText || isLoading;
+
+        if (isLoading) {
+          analyzeBtn.innerHTML = `
+                    <div class="spinner"></div>
+                    Analyzing...
+                `;
+        } else {
+          analyzeBtn.innerHTML = `
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                    Analyze Text
+                `;
+        }
+      }
+
+      function showError(message) {
+        errorText.textContent = message;
+        errorMessage.classList.remove("hidden");
+        resultsSection.classList.add("hidden");
+        resultsCard.classList.remove("hidden");
+      }
+
+      function showResults(data) {
+        // Update prediction
+        const icon = getResultIcon(data.predicted_class);
+        predictionValue.innerHTML = `${icon} ${data.predicted_class}`;
+
+        // Update confidence
+        const confidencePercent = (data.confidence * 100).toFixed(1);
+        confidenceFill.style.width = `${data.confidence * 100}%`;
+        confidenceBadge.textContent = `${confidencePercent}%`;
+
+        // Update processed text
+        processedText.textContent = data.clean_text;
+
+        // Update result icon
+        resultIcon.innerHTML = icon;
+
+        // Show results
+        errorMessage.classList.add("hidden");
+        resultsSection.classList.remove("hidden");
+        resultsCard.classList.remove("hidden");
+      }
+
+      function getResultIcon(predictedClass) {
+        const isPositive =
+          predictedClass.toLowerCase().includes("positive") ||
+          predictedClass.toLowerCase().includes("healthy");
+
+        if (isPositive) {
+          return `<svg class="icon icon-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>`;
+        } else {
+          return `<svg class="icon icon-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                </svg>`;
+        }
+      }
+
+      async function makePrediction() {
+        const text = inputText.value.trim();
+        if (!text) return;
+
+        isLoading = true;
+        updateButtonState();
+
+        try {
+          const response = await fetch("/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: text }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            showResults(data);
+          } else {
+            showError(data.error || "An error occurred");
+          }
+        } catch (error) {
+          showError(error.message || "Request failed");
+        } finally {
+          isLoading = false;
+          updateButtonState();
+        }
+      }
+
+      // Event listeners
+      inputText.addEventListener("input", updateButtonState);
+      analyzeBtn.addEventListener("click", makePrediction);
+
+      // Initialize button state
+      updateButtonState();
+
+      // Allow Enter key to submit (with Ctrl/Cmd)
+      inputText.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          makePrediction();
+        }
+      });
+    </script>
+  </body>
+</html>

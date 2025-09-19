@@ -1,7 +1,7 @@
 # from transformers import BertTokenizerFast, TFBertForSequenceClassificationimport
 from transformers import DistilBertTokenizerFast, TFDistilBertForSequenceClassification
 import tensorflow as tf
-from preprocessing import clean_text
+from .preprocessing import clean_text
 
 
 # Load model & tokenizer
